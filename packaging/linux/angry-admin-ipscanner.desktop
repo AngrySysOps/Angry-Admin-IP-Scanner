@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Angry Admin IP Scanner
+Comment=Desktop IP scanner for subnet, range, and DNS discovery workflows.
+Exec=angry-admin-ipscanner
+Terminal=false
+Categories=Network;Utility;

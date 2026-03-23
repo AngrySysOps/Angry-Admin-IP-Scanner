@@ -1,0 +1,136 @@
+name: Build release packages
+
+on:
+  push:
+    tags:
+      - '*'
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Tag to build and attach assets to
+        required: true
+        type: string
+
+jobs:
+  linux-packages:
+    name: Build Linux packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Linux packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            rpm \
+            dpkg-dev \
+            patchelf \
+            binutils \
+            libgl1 \
+            libx11-6 \
+            libxext6 \
+            libxrender1 \
+            libxi6 \
+            libxkbcommon-x11-0 \
+            libfontconfig1 \
+            libpulse0 \
+            libxcb-xkb1 \
+            libxcb-render-util0 \
+            libxcb-keysyms1 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-xinerama0 \
+            libxcb-shape0 \
+            libgstreamer1.0-0 \
+            libgstreamer-plugins-base1.0-0
+
+      - name: Build Debian and RPM packages
+        run: ./scripts/build_linux_packages.sh
+
+      - name: Upload Linux workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: dist/linux/*
+          if-no-files-found: error
+
+  macos-package:
+    name: Build macOS package
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build macOS app bundle and ZIP
+        run: ./scripts/build_macos_app.sh
+
+      - name: Upload macOS workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: dist/macos/*
+          if-no-files-found: error
+
+  upload-release-assets:
+    name: Attach assets to GitHub release
+    if: github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs:
+      - linux-packages
+      - macos-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Resolve release tag
+        id: release_tag
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download workflow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Ensure GitHub release exists
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "$RELEASE_TAG" --notes ""
+
+      - name: Upload assets to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+        run: |
+          gh release upload "$RELEASE_TAG" release-assets/* --clobber

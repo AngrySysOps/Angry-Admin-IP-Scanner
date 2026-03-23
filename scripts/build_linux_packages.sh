@@ -12,7 +12,8 @@ DIST_DIR="$ROOT_DIR/dist/linux"
 APP_DIR="$BUILD_DIR/appdir"
 VENV_DIR="$BUILD_DIR/.venv"
 PYINSTALLER_NAME="AngryAdminIPScanner"
-BIN_PATH="$ROOT_DIR/dist/$PYINSTALLER_NAME/$PYINSTALLER_NAME"
+PYINSTALLER_OUTPUT="$ROOT_DIR/dist/$PYINSTALLER_NAME"
+ALT_BIN_PATH="$ROOT_DIR/dist/$PYINSTALLER_NAME/$PYINSTALLER_NAME"
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -21,12 +22,32 @@ require_cmd() {
   }
 }
 
+resolve_binary_path() {
+  if [[ -f "$PYINSTALLER_OUTPUT" ]]; then
+    printf '%s\n' "$PYINSTALLER_OUTPUT"
+    return 0
+  fi
+  if [[ -f "$ALT_BIN_PATH" ]]; then
+    printf '%s\n' "$ALT_BIN_PATH"
+    return 0
+  fi
+  echo "Unable to find packaged executable after PyInstaller build." >&2
+  return 1
+}
+
 require_cmd python3
 require_cmd dpkg-deb
 require_cmd rpmbuild
 
 rm -rf "$BUILD_DIR" "$DIST_DIR"
-mkdir -p "$BUILD_DIR" "$DIST_DIR" "$APP_DIR/usr/lib/$APP_NAME" "$APP_DIR/usr/bin" "$APP_DIR/usr/share/applications" "$APP_DIR/usr/share/doc/$APP_NAME" "$BUILD_DIR/rpmbuild"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+mkdir -p \
+  "$BUILD_DIR" \
+  "$DIST_DIR" \
+  "$APP_DIR/usr/lib/$APP_NAME" \
+  "$APP_DIR/usr/bin" \
+  "$APP_DIR/usr/share/applications" \
+  "$APP_DIR/usr/share/doc/$APP_NAME" \
+  "$BUILD_DIR/rpmbuild"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
 python3 -m venv "$VENV_DIR"
 # shellcheck disable=SC1091
@@ -35,6 +56,7 @@ pip install --upgrade pip
 pip install -r "$ROOT_DIR/requirements.txt" pyinstaller
 pyinstaller --clean "$ROOT_DIR/ipscaner.spec"
 
+BIN_PATH="$(resolve_binary_path)"
 install -m 755 "$BIN_PATH" "$APP_DIR/usr/lib/$APP_NAME/$APP_NAME"
 ln -sf "../lib/$APP_NAME/$APP_NAME" "$APP_DIR/usr/bin/$APP_NAME"
 install -m 644 "$ROOT_DIR/README.md" "$APP_DIR/usr/share/doc/$APP_NAME/README.md"
@@ -53,7 +75,7 @@ Section: net
 Priority: optional
 Architecture: $DEB_ARCH
 Maintainer: AngrySysOps
-Depends: libgl1, libx11-6, libxext6, libxrender1, libxi6, libxkbcommon-x11-0, libfontconfig1
+Depends: libgl1, libx11-6, libxext6, libxrender1, libxi6, libxkbcommon-x11-0, libfontconfig1, libpulse0, libxcb-xkb1, libxcb-render-util0, libxcb-keysyms1, libxcb-icccm4, libxcb-image0, libxcb-xinerama0, libxcb-shape0, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0
 Installed-Size: $INSTALLED_SIZE
 Description: Desktop IP scanner for subnet, range, and DNS discovery workflows.
 EOF

@@ -82,6 +82,7 @@ The script writes the final artifacts to `dist/macos/`:
 ### Release automation
 - Pushing a Git tag runs the GitHub Actions workflow to build the Linux and macOS artifacts as workflow artifacts.
 - Publishing a GitHub Release runs the same build and automatically attaches the generated `.deb`, `.rpm`, `.app`, and macOS ZIP outputs to that release.
+- The macOS workflow installs Pillow so the existing `.ico` file can be converted during bundling, and the Linux workflow installs the Qt/XCB/GStreamer/PulseAudio libraries needed by PyInstaller on GitHub-hosted runners.
 
 ### Supported scan methods
 - Ping

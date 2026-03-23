@@ -25,7 +25,7 @@ python3 -m venv "$VENV_DIR"
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 pip install --upgrade pip
-pip install -r "$ROOT_DIR/requirements.txt" pyinstaller
+pip install -r "$ROOT_DIR/requirements.txt" pyinstaller pillow
 
 PYINSTALLER_ARGS=(
   --clean

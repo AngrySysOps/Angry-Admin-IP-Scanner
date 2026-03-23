@@ -5,7 +5,7 @@ Summary:        Desktop IP scanner for subnet, range, and DNS discovery workflow
 License:        Proprietary
 URL:            https://angrysysops.com/ip-scanner/
 Source0:        %{name}-%{version}.tar.gz
-Requires:       libX11 libXext libXrender libXi libXkbCommon libfontconfig
+Requires:       libX11 libXext libXrender libXi libXkbCommon libfontconfig libpulse libxcb libxkbcommon-x11 gstreamer1 gstreamer1-plugins-base
 
 %description
 Desktop IP scanner for subnet, range, and DNS discovery workflows.

@@ -80,8 +80,9 @@ The script writes the final artifacts to `dist/macos/`:
 - `dist/macos/AngryAdminIPScanner-macos.zip`
 
 ### Release automation
-- Pushing a Git tag runs the GitHub Actions workflow to build the Linux and macOS artifacts as workflow artifacts.
-- Publishing a GitHub Release runs the same build and automatically attaches the generated `.deb`, `.rpm`, `.app`, and macOS ZIP outputs to that release.
+- Pushing a Git tag builds the Linux and macOS artifacts and uploads them to the matching GitHub Release, creating the release automatically if it does not exist yet.
+- Publishing a GitHub Release also rebuilds the artifacts and re-attaches the generated `.deb`, `.rpm`, `.app`, and macOS ZIP outputs to that release.
+- Manual workflow runs require a `release_tag` input so the workflow can check out that tag and upload the generated files to the correct release.
 - The macOS workflow installs Pillow so the existing `.ico` file can be converted during bundling, and the Linux workflow installs the Qt/XCB/GStreamer/PulseAudio libraries needed by PyInstaller on GitHub-hosted runners.
 
 ### Supported scan methods

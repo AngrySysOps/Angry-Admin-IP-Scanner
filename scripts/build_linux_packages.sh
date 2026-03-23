@@ -82,7 +82,7 @@ EOF
 
 dpkg-deb --build "$APP_DIR" "$DIST_DIR/${APP_NAME}_${VERSION}_${DEB_ARCH}.deb"
 
-tar -C "$APP_DIR" -czf "$BUILD_DIR/rpmbuild/SOURCES/${APP_NAME}-${VERSION}.tar.gz" .
+tar --exclude="./DEBIAN" -C "$APP_DIR" -czf "$BUILD_DIR/rpmbuild/SOURCES/${APP_NAME}-${VERSION}.tar.gz" .
 sed \
   -e "s|@ROOT_DIR@|$ROOT_DIR|g" \
   -e "s|@APP_NAME@|$APP_NAME|g" \

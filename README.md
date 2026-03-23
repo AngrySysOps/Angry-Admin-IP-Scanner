@@ -8,6 +8,16 @@ The latest public build of **Angry Admin IP Scanner** is available on GitHub Rel
 - Linux RPM package: `angry-admin-ipscanner-1.0-1.x86_64.rpm`
 - macOS application bundle and ZIP archive
 
+### Install from release packages
+- `angry-admin-ipscanner-1.0-1.x86_64.rpm`  
+  RPM package for Linux. Install using: `sudo rpm -i angry-admin-ipscanner-1.0-1.x86_64.rpm`.
+
+- `angry-admin-ipscanner_1.0_amd64.deb`  
+  DEB package for Debian/Ubuntu systems. Install using: `sudo dpkg -i angry-admin-ipscanner_1.0_amd64.deb`.
+
+- `AngryAdminIPScanner-macos.zip`  
+  macOS application archive. Install by opening the ZIP, then drag `Angry Admin IP Scanner.app` into `Applications`.
+
 ### How to create the Linux packages
 Build the Linux packages on a Linux machine.
 

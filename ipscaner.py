@@ -549,5 +549,31 @@ else:
         return 1
 
 
+    def show_disclaimer_dialog(self):
+        QMessageBox.information(self, "Disclaimer", DISCLAIMER_TEXT)
+
+
+def ensure_disclaimer_accepted(app):
+    settings = QSettings(ORG_NAME, APP_NAME)
+    if settings.value("disclaimerAccepted", False, type=bool):
+        return True
+
+    dialog = QMessageBox()
+    dialog.setIcon(QMessageBox.Warning)
+    dialog.setWindowTitle("Disclaimer")
+    dialog.setText(
+        f"{DISCLAIMER_TEXT}\n\n"
+        "Do you accept these terms?"
+    )
+    checkbox = QCheckBox("Don't show this again")
+    dialog.setCheckBox(checkbox)
+    dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    dialog.setDefaultButton(QMessageBox.Yes)
+    accepted = dialog.exec_() == QMessageBox.Yes
+    if accepted and checkbox.isChecked():
+        settings.setValue("disclaimerAccepted", True)
+    return accepted
+
+
 if __name__ == "__main__":
     sys.exit(main())

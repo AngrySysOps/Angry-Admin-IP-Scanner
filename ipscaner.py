@@ -3,6 +3,7 @@ import importlib.util
 import os
 import sys
 import ipaddress
+import shutil
 import socket
 import subprocess
 import platform
@@ -10,6 +11,11 @@ import concurrent.futures
 import time
 
 APP_NAME = "Angry Admin: IP Scanner"
+APP_BUNDLE_NAME = "Angry Admin IP Scanner"
+APP_DESCRIPTION = "Desktop IP scanner for subnet, range, and DNS discovery workflows."
+PACKAGE_NAME = "angry-admin-ipscanner"
+PACKAGE_VERSION = "1.0"
+PACKAGE_RELEASE = "1"
 ORG_NAME = "AngrySysOps"
 WEBSITE_URL = "https://angrysysops.com"
 GUIDE_URL = "https://angrysysops.com/ip-scanner/"
@@ -45,6 +51,14 @@ if HAS_DNSPYTHON:
 def resource_path(*parts):
     base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, *parts)
+
+
+def application_icon_path():
+    for candidate in ("icon.icns", "icon.png", "icon.ico"):
+        icon_path = resource_path(candidate)
+        if os.path.exists(icon_path):
+            return icon_path
+    return ""
 
 
 def run_background_command(command, capture_output=False, text=False):
@@ -123,6 +137,30 @@ def parse_scan_input(scan_input: str):
     )
 
 
+def ping_command(ip):
+    system = platform.system().lower()
+    if system == "windows":
+        return ["ping", "-n", "1", "-w", "2000", ip]
+    if system == "darwin":
+        return ["ping", "-c", "1", "-W", "2000", ip]
+    return ["ping", "-c", "1", "-W", "2", ip]
+
+
+def arp_command(ip):
+    system = platform.system().lower()
+    if system == "windows":
+        return ["arp", "-a"]
+    if system == "darwin":
+        return ["arp", "-an", ip]
+    if shutil.which("arping"):
+        return ["arping", "-c", "1", ip]
+    if shutil.which("ip"):
+        return ["ip", "neigh", "show", ip]
+    if shutil.which("arp"):
+        return ["arp", "-n", ip]
+    return []
+
+
 if HAS_PYQT5:
     from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt, QSettings, QUrl
     from PyQt5.QtGui import QIcon, QTextDocument
@@ -182,10 +220,9 @@ if HAS_PYQT5:
             self.finished_signal.emit()
 
         def scan_ip(self, ip):
-            system = platform.system().lower()
             ping_ok = False
             if self.use_ping:
-                command = ["ping", "-n", "1", "-w", "2000", ip] if system == "windows" else ["ping", "-c", "1", "-W", "2", ip]
+                command = ping_command(ip)
                 for _ in range(2):
                     try:
                         if run_background_command(command).returncode == 0:
@@ -200,12 +237,14 @@ if HAS_PYQT5:
             arp_ok = False
             if self.use_arp:
                 try:
-                    if system == "windows":
-                        result = run_background_command(["arp", "-a"], capture_output=True, text=True)
-                        arp_ok = ip in result.stdout
-                    else:
-                        result = run_background_command(["arping", "-c", "1", ip])
-                        arp_ok = result.returncode == 0
+                    command = arp_command(ip)
+                    if command:
+                        result = run_background_command(command, capture_output=True, text=True)
+                        arp_output = result.stdout or ""
+                        if platform.system().lower() == "windows":
+                            arp_ok = ip in arp_output
+                        else:
+                            arp_ok = result.returncode == 0 and ip in arp_output
                 except Exception:
                     arp_ok = False
 
@@ -239,8 +278,8 @@ if HAS_PYQT5:
             self.settings = QSettings(ORG_NAME, APP_NAME)
             self.setWindowTitle(APP_NAME)
             self.resize(900, 620)
-            icon_path = resource_path("icon.ico")
-            if os.path.exists(icon_path):
+            icon_path = application_icon_path()
+            if icon_path:
                 self.setWindowIcon(QIcon(icon_path))
             self.thread = None
             self.worker = None
@@ -284,7 +323,7 @@ if HAS_PYQT5:
                 self.checkbox_reverse_dns.setToolTip(DNSPYTHON_WARNING)
             self.checkbox_arp = self.create_option(
                 "ARP",
-                "Sends ARP requests to detect the host on local networks.",
+                "Uses the local ARP toolchain to detect neighbors on the local network.",
                 options_layout,
             )
             self.checkbox_tcp = self.create_option(
@@ -498,6 +537,7 @@ if HAS_PYQT5:
             <head/><body>
             <h2>{APP_NAME}</h2>
             <p><b>Powered by AngrySysOps</b></p>
+            <p>{APP_DESCRIPTION}</p>
             <p>
                 Website: <a href='{WEBSITE_URL}'>{WEBSITE_URL}</a><br>
                 X: <a href='{X_URL}'>{X_HANDLE}</a><br>
@@ -540,7 +580,11 @@ if HAS_PYQT5:
     def main():
         app = QApplication(sys.argv)
         app.setApplicationName(APP_NAME)
+        app.setApplicationVersion(PACKAGE_VERSION)
         app.setOrganizationName(ORG_NAME)
+        icon_path = application_icon_path()
+        if icon_path:
+            app.setWindowIcon(QIcon(icon_path))
         if not ensure_disclaimer_accepted():
             return 0
         window = MainWindow()

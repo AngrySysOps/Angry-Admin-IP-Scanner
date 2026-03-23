@@ -1,0 +1,32 @@
+Name:           @APP_NAME@
+Version:        @VERSION@
+Release:        @RELEASE@%{?dist}
+Summary:        Desktop IP scanner for subnet, range, and DNS discovery workflows.
+License:        Proprietary
+URL:            https://angrysysops.com/ip-scanner/
+Source0:        %{name}-%{version}.tar.gz
+Requires:       libX11 libXext libXrender libXi libXkbCommon libfontconfig
+
+%description
+Desktop IP scanner for subnet, range, and DNS discovery workflows.
+
+%prep
+%setup -q -c -T
+%{__tar} -xzf %{SOURCE0}
+
+%build
+
+%install
+mkdir -p %{buildroot}
+cp -a * %{buildroot}/
+
+%files
+/usr/bin/@APP_NAME@
+/usr/lib/@APP_NAME@/@APP_NAME@
+/usr/share/applications/angry-admin-ipscanner.desktop
+/usr/share/doc/@APP_NAME@/README.md
+%attr(0644,root,root) /usr/lib/@APP_NAME@/icon.ico
+
+%changelog
+* Mon Mar 23 2026 AngrySysOps - @VERSION@-@RELEASE@
+- Added Linux RPM packaging

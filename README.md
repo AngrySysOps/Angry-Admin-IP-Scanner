@@ -2,14 +2,29 @@
 
 The latest public build of **Angry Admin IP Scanner** is available on GitHub Releases.
 
-### Latest Release
-- [Download the latest release](https://github.com/AngrySysOps/Angry-Admin-IP-Scanner/releases/latest)
+### Current platform targets
+- Windows executable
+- Linux Debian package: `angry-admin-ipscanner_1.0_amd64.deb`
+- Linux RPM package: `angry-admin-ipscanner-1.0-1.x86_64.rpm`
+- macOS application bundle and ZIP archive
 
-### Current Release
-- [Angry Admin IP Scanner v1.0.0](https://github.com/AngrySysOps/Angry-Admin-IP-Scanner/releases/tag/v1.0.0)
+### Build the Linux packages
+Run the Linux packaging script on a Linux host that has `dpkg-deb` and `rpmbuild` installed:
 
-### What’s included
-The release package includes the Windows executable for **Angry Admin IP Scanner**.
+```bash
+./scripts/build_linux_packages.sh
+```
+
+Artifacts are written to `dist/linux/`.
+
+### Build the macOS app
+Run the macOS packaging script on macOS:
+
+```bash
+./scripts/build_macos_app.sh
+```
+
+Artifacts are written to `dist/macos/`.
 
 ### Supported scan methods
 - Ping
@@ -37,7 +52,7 @@ Scan results can be exported to:
 ### Notes
 - On first launch, the application displays a disclaimer that must be accepted before use.
 - If **Don't show this again** is selected, the disclaimer will not appear on future launches.
-- ARP-based checks are only useful on local networks.
+- ARP checks now use the native tooling available on Windows, Linux, and macOS.
 - Some scan methods may be affected by firewall rules, host configuration, or network policy.
 
 ### Legal Disclaimer

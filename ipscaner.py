@@ -43,7 +43,8 @@ if HAS_DNSPYTHON:
 
 
 def resource_path(*parts):
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), *parts)
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, *parts)
 
 
 def run_background_command(command, capture_output=False, text=False):
@@ -238,7 +239,9 @@ if HAS_PYQT5:
             self.settings = QSettings(ORG_NAME, APP_NAME)
             self.setWindowTitle(APP_NAME)
             self.resize(900, 620)
-            self.setWindowIcon(QIcon(resource_path("icon.ico")))
+            icon_path = resource_path("icon.ico")
+            if os.path.exists(icon_path):
+                self.setWindowIcon(QIcon(icon_path))
             self.thread = None
             self.worker = None
             self.setup_ui()
@@ -547,32 +550,6 @@ else:
     def main():
         print(PYQT5_MISSING_MESSAGE, file=sys.stderr)
         return 1
-
-
-    def show_disclaimer_dialog(self):
-        QMessageBox.information(self, "Disclaimer", DISCLAIMER_TEXT)
-
-
-def ensure_disclaimer_accepted(app):
-    settings = QSettings(ORG_NAME, APP_NAME)
-    if settings.value("disclaimerAccepted", False, type=bool):
-        return True
-
-    dialog = QMessageBox()
-    dialog.setIcon(QMessageBox.Warning)
-    dialog.setWindowTitle("Disclaimer")
-    dialog.setText(
-        f"{DISCLAIMER_TEXT}\n\n"
-        "Do you accept these terms?"
-    )
-    checkbox = QCheckBox("Don't show this again")
-    dialog.setCheckBox(checkbox)
-    dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-    dialog.setDefaultButton(QMessageBox.Yes)
-    accepted = dialog.exec_() == QMessageBox.Yes
-    if accepted and checkbox.isChecked():
-        settings.setValue("disclaimerAccepted", True)
-    return accepted
 
 
 if __name__ == "__main__":

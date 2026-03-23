@@ -118,6 +118,7 @@ jobs:
       - name: Ensure GitHub release exists
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
         run: |
           gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "$RELEASE_TAG" --notes ""
@@ -125,6 +126,7 @@ jobs:
       - name: Upload assets to GitHub release
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
         run: |
           gh release upload "$RELEASE_TAG" release-assets/* --clobber

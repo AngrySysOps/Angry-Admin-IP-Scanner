@@ -79,6 +79,10 @@ The script writes the final artifacts to `dist/macos/`:
 - `dist/macos/Angry Admin IP Scanner.app`
 - `dist/macos/AngryAdminIPScanner-macos.zip`
 
+### Release automation
+- Pushing a Git tag runs the GitHub Actions workflow to build the Linux and macOS artifacts as workflow artifacts.
+- Publishing a GitHub Release runs the same build and automatically attaches the generated `.deb`, `.rpm`, `.app`, and macOS ZIP outputs to that release.
+
 ### Supported scan methods
 - Ping
 - Reverse DNS

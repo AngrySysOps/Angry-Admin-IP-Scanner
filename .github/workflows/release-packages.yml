@@ -1,0 +1,85 @@
+name: Build release packages
+
+on:
+  push:
+    tags:
+      - '*'
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  linux-packages:
+    name: Build Linux packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Linux packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm dpkg-dev patchelf binutils
+
+      - name: Build Debian and RPM packages
+        run: ./scripts/build_linux_packages.sh
+
+      - name: Upload Linux workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: dist/linux/*
+          if-no-files-found: error
+
+  macos-package:
+    name: Build macOS package
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build macOS app bundle and ZIP
+        run: ./scripts/build_macos_app.sh
+
+      - name: Upload macOS workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: dist/macos/*
+          if-no-files-found: error
+
+  upload-release-assets:
+    name: Attach assets to GitHub release
+    if: github.event_name == 'release'
+    needs:
+      - linux-packages
+      - macos-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download workflow artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Upload assets to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" release-assets/* --clobber
